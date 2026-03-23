@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROK SECURITY SYSTEM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #020617; font-family: 'Rajdhani', sans-serif; color: #f8fafc; }
+        .cyber-card { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid #1e293b; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .neon-text { color: #22d3ee; text-shadow: 0 0 10px rgba(34, 211, 238, 0.5); }
+        .nav-btn { transition: 0.3s; border-left: 3px solid transparent; }
+        .nav-btn.active { border-left: 3px solid #22d3ee; background: rgba(34, 211, 238, 0.1); color: #22d3ee; }
+        .input-glow:focus { border-color: #22d3ee; box-shadow: 0 0 10px rgba(34, 211, 238, 0.2); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-4 cyber-card rounded-3xl p-6">
+            <h1 class="text-2xl font-bold neon-text mb-8 tracking-tighter text-center" style="font-family: 'Orbitron';">SECURITY VIP</h1>
+            <nav class="space-y-2">
+                <button onclick="switchMode('info')" id="btn-info" class="nav-btn active w-full text-left p-4 rounded-xl hover:bg-slate-800">🔍 Kiểm Tra Thông Tin</button>
+                <button onclick="switchMode('otp')" id="btn-otp" class="nav-btn w-full text-left p-4 rounded-xl hover:bg-slate-800">📩 Gửi Mã OTP</button>
+                <button onclick="switchMode('unbind')" id="btn-unbind" class="nav-btn w-full text-left p-4 rounded-xl hover:bg-slate-800">🔓 Hủy Liên Kết (OTP)</button>
+                <button onclick="switchMode('unbind_sec')" id="btn-unbind_sec" class="nav-btn w-full text-left p-4 rounded-xl hover:bg-slate-800">🔑 Hủy Liên Kết (Pass 2)</button>
+                <button onclick="switchMode('cancel')" id="btn-cancel" class="nav-btn w-full text-left p-4 rounded-xl hover:bg-red-500/10 text-red-400">🚫 Hủy Lệnh Đang Chờ</button>
+            </nav>
+        </div>
+
+        <div class="lg:col-span-8 space-y-6">
+            <div class="cyber-card rounded-3xl p-8">
+                <div id="dynamic-form" class="space-y-4">
+                    <h2 id="mode-title" class="text-xl font-bold mb-6 uppercase tracking-widest text-slate-400">Kiểm Tra Thông Tin</h2>
+                    <input type="text" id="access_token" placeholder="NHẬP ACCESS TOKEN" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none input-glow transition-all">
+                    <div id="extra-fields" class="space-y-4"></div>
+                    <button onclick="processRequest()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold py-4 rounded-2xl transition-all shadow-lg shadow-cyan-500/20 uppercase tracking-widest">Thực Hiện Yêu Cầu</button>
+                </div>
+            </div>
+
+            <div class="cyber-card rounded-3xl p-6">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs uppercase text-slate-500 tracking-widest">Hệ Thống Phản Hồi</span>
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                </div>
+                <div id="console" class="bg-black/50 p-4 rounded-xl h-40 overflow-y-auto font-mono text-sm text-cyan-500 border border-slate-800">
+                    > Sẵn sàng...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mode = 'info';
+
+        function switchMode(newMode) {
+            mode = newMode;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${newMode}`).classList.add('active');
+            
+            const fields = document.getElementById('extra-fields');
+            const title = document.getElementById('mode-title');
+            fields.innerHTML = '';
+
+            const configs = {
+                info: "Kiểm Tra Thông Tin",
+                otp: "Gửi Mã OTP",
+                unbind: "Hủy Liên Kết (OTP)",
+                unbind_sec: "Hủy Liên Kết (Pass 2)",
+                cancel: "Hủy Lệnh Đang Chờ"
+            };
+            title.innerText = configs[newMode];
+
+            if(newMode === 'otp') {
+                fields.innerHTML = '<input type="text" id="email" placeholder="NHẬP EMAIL" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none input-glow">';
+            } else if(newMode === 'unbind') {
+                fields.innerHTML = `
+                    <input type="text" id="email" placeholder="NHẬP EMAIL" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none input-glow">
+                    <input type="text" id="otp" placeholder="MÃ OTP" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none input-glow">
+                `;
+            } else if(newMode === 'unbind_sec') {
+                fields.innerHTML = '<input type="password" id="securitycode" placeholder="MẬT KHẨU CẤP 2" class="w-full bg-slate-900 border border-slate-700 p-4 rounded-2xl outline-none input-glow">';
+            }
+        }
+
+        function log(msg) {
+            const c = document.getElementById('console');
+            c.innerHTML += `<div>[${new Date().toLocaleTimeString()}] > ${msg}</div>`;
+            c.scrollTop = c.scrollHeight;
+        }
+
+        async function processRequest() {
+            const token = document.getElementById('access_token').value;
+            if(!token) return log("Lỗi: Thiếu Access Token");
+
+            let url = `/${mode === 'unbind_sec' ? 'unbind_secondary' : mode}?access_token=${token}`;
+            
+            if(document.getElementById('email')) url += `&email=${document.getElementById('email').value}`;
+            if(document.getElementById('otp')) url += `&otp=${document.getElementById('otp').value}`;
+            if(document.getElementById('securitycode')) url += `&securitycode=${document.getElementById('securitycode').value}`;
+
+            log(`Đang gửi yêu cầu ${mode.toUpperCase()}...`);
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                log(JSON.stringify(data));
+            } catch (e) {
+                log("Lỗi: Không thể kết nối đến máy chủ.");
+            }
+        }
+    </script>
+</body>
+</html>
